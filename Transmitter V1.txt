@@ -1,0 +1,43 @@
+#include <SPI.h>
+#include <LoRa.h>
+
+int message = 0;
+int button[2] = {2,3}; //stores button location on the board
+int buttonState[2] = {0,0}; //current state of each button
+unsigned long buttonDebounce = 0; //uses global input delay
+
+void setup() {
+  pinMode(button[0], INPUT_PULLUP);
+  pinMode(button[1], INPUT_PULLUP);
+  
+  Serial.begin(9600);
+  
+  while (!Serial);
+  Serial.println("LoRa Sender");
+  
+  if (!LoRa.begin(915E6)) {
+    Serial.println("Starting LoRa failed!");
+    while (1);
+  }
+  delay(1000);
+}
+
+void loop() {
+  
+  if (buttonDebounce > millis()) {
+    for(int i=0; i < 2; i++) {
+		buttonState[i] = digitalRead(button[i]);
+		if (buttonState[i] == LOW) {
+			// send packet
+			LoRa.beginPacket();
+			LoRa.print("button ");
+			LoRa.print(i);
+			LoRa.print(" pressed");
+			LoRa.endPacket();
+			Serial.print("Sending packet: ");
+			Serial.println(message+i); //offset for array 0 
+			buttonDebounce = millis()+500; //sets timer delay
+		}
+	}
+  }
+}

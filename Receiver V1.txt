@@ -1,0 +1,60 @@
+#include <SPI.h>
+#include <LoRa.h>
+
+String contents = "";
+String button1Press = "button 1 pressed";
+string button2Press = "button 2 pressed";
+int buttonReset = 4; //reset button input channel
+int led[2] = {2, 3}; //channels for led signals
+
+void setup() {
+
+  pinMode(led[0], OUTPUT);
+  pinMode(led[1], OUTPUT);
+  pinMode(buttonReset, INPUT_PULLUP);
+  Serial.begin(9600);
+  while (!Serial);
+  //Wire.begin();
+  Serial.println("LoRa Receiver");
+
+  if (!LoRa.begin(915E6)) {
+    Serial.println("Starting LoRa failed!");
+    while (1);
+  }
+}
+
+void loop() {
+  // try to parse packet
+  int packetSize = LoRa.parsePacket();
+  if (packetSize) {
+    // received a packet
+    Serial.print("Received packet '");
+
+    // read packet
+    while (LoRa.available()) {  
+      contents += (char)LoRa.read();
+    }
+    
+    // print RSSI of packet
+    Serial.print("' with RSSI ");
+    Serial.println(LoRa.packetRssi());
+    Serial.println(contents);
+
+    if(contents.equals(button1Press)){
+      digitalWrite(led[0], HIGH);
+      Serial.println("led 1 on");
+    }
+
+	if(contents.equals(button2Press)){
+      digitalWrite(led[1], HIGH);
+      Serial.println("led 2 on");
+    }
+    
+    contents = "";
+  }
+
+  if (digitalRead(buttonReset) == LOW) {
+	digitalWrite(led[0], LOW);
+	digitalWrite(led[0], LOW);
+  }
+}
